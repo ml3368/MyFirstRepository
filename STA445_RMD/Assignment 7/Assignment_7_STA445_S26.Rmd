@@ -1,0 +1,186 @@
+---
+title: "STA_445_Assignment 7"
+author: "Max Levine"
+output: pdf_document
+---
+
+Load your packages here:
+```{r include=FALSE}
+library(tidyverse)
+library(faraway)
+library(ggrepel)
+library(latex2exp)
+```
+
+## Problem 1: 
+
+The `infmort` data set from the package `faraway` gives the infant mortality rate for a variety of countries. The information is relatively out of date, but will be fun to graph. Visualize the data using by creating scatter plots of mortality vs income while faceting using `region` and setting color by `oil` export status. Utilize a $\log_{10}$ transformation for both `mortality` and `income` axes. This can be done either by doing the transformation inside the `aes()` command or by utilizing the `scale_x_log10()` or `scale_y_log10()` layers. The critical difference is if the scales are on the original vs log transformed scale. Experiment with both and see which you prefer.
+    
+a.  The `rownames()` of the table gives the country names and you should create a new column that contains the country names. *`rownames`
+```{r}
+data(infmort)
+
+infmort <- infmort %>%
+  mutate(Country = rownames(infmort) %>% str_trim())
+```
+
+
+b. Create scatter plots with the `log10()` transformation inside the `aes()`command.
+```{r message=FALSE, warning=FALSE}
+ggplot(infmort) + 
+  geom_point(aes(y = log10(mortality), x = log(income), color = oil)) +
+  facet_wrap(~region)
+```
+
+
+c. Create the scatter plots using the `scale_x_log10()` and `scale_y_log10()`.Set the major and minor breaks to be useful and aesthetically pleasing.Comment on which version you find easier to read.
+```{r message=FALSE, warning=FALSE}
+P1 <- ggplot(infmort) +
+        geom_point(aes(y = mortality, x = income, color = oil)) +
+        scale_x_log10() +
+        scale_y_log10() +
+        facet_wrap(~region)
+P1
+```
+
+\color{blue}
+Technically using the log scale on the data makes the numbers on the scales smaller and easier to read, but I think that using the scale_x_log10() (and same for y) is better as it maintains the numbers of the origianl data so that you don't have to exponentiate the data to get the income numbers or the mortality rate.
+
+\color{black}
+
+d.  The package `ggrepel` contains functions `geom_text_repel()` and `geom_label_repel()` that mimic the basic `geom_text()` and `geom_label()`functions in `ggplot2`, but work to make sure the labels don't overlap.  Select 10-15 countries to label and do so using the `geom_text_repel()` function.
+```{r}
+countries <- infmort %>%
+  slice_sample(n = 15)
+```
+
+
+```{r warning=FALSE}
+ggplot(infmort, aes(y = mortality, x = income, color = oil)) +
+  geom_point() +
+  scale_x_log10() +
+  scale_y_log10() +
+  facet_wrap(~region) +
+  geom_text_repel(data = countries,
+                  aes(label = Country))
+```
+
+
+## Problem 2
+
+Using the `datasets::trees` data, complete the following:
+```{r}
+data("trees")
+```
+
+
+a. Create a regression model for $y=$ `Volume` as a function of $x=$ `Height`.
+```{r}
+model <- lm(Volume ~ Height, data = trees)
+summary(model)
+```
+
+    
+b. Using the str(your model's name) command, to get a list of all the information stored in the linear model object.  Use $ to extract the slope and intercept of the regression line (the coefficients).
+```{r}
+Intercept <- model$coefficients[1]
+Intercept
+
+Slope <- model$coefficients[2]
+Slope
+```
+
+
+c. Using `ggplot2`, create a scatter plot of Volume vs Height. 
+```{r}
+P1 <- ggplot(trees, aes(x = Height, y = Volume)) +
+  geom_point()
+P1
+```
+
+
+d. Create a nice white filled rectangle to add text information to using by adding the following annotation layer.
+
+annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74, fill='white', color='black') 
+```{r}
+P2 <- P1 +
+  annotate("rect", xmin = 65, xmax = 75, ymin = 60, ymax = 74,
+           fill = "white", color = "black")
+P2
+```
+
+
+e. Add some annotation text to write the equation of the line
+        $\hat{y}_i = -87.12 + 1.54x_i$ in the text area.
+```{r}
+P3 <- P2 +
+  annotate("text", x = 70, y = 70,
+           label = TeX("$\\hat{y}_i = -87.12 + 1.54x_i$"), parse = TRUE)
+P3
+```
+
+        
+f.   Add annotation to add $R^2 = 0.358$
+```{r}
+P4 <- P3 +
+  annotate("text", x = 70, y = 64,
+           label = TeX("$R^2 = 0.358$"), parse = TRUE)
+P4
+```
+
+
+g. Add the regression line in red. The most convenient layer function to use is `geom_abline()`. 
+```{r}
+P5 <- P4 +
+  geom_abline(slope = Slope, intercept = Intercept,
+              color = "red")
+P5
+```
+
+
+## Problem 3
+
+In `datasets::Titanic` table summarizes the survival of passengers aboard the ocean liner *Titanic*. It includes information about passenger class, sex, and age (adult or child). Create a bar graph showing the number of individuals that survived based on the passenger `Class`, `Sex`, and `Age` variable information. You'll need to use faceting and/or color to get all four variables on the same graph. Make sure that differences in survival among different classes of children are perceivable.  *Unfortunately, the data is stored as a `table`and to expand it to a data frame, the following code can be used.*
+```{r}
+data(Titanic)
+```
+
+    
+    ```{r}
+    Titanic <- Titanic %>% as.data.frame()
+    ```
+
+a. Make this graph using the default theme. *If you use color to denote survivorship, modify the color scheme so that a cold color denotes death.*
+```{r}
+ggplot(Titanic) +
+  geom_bar(aes(x = Survived, y = Freq), stat = "identity") +
+  facet_grid(~Class + Sex + Age)
+```
+
+
+b. Make this graph using the `theme_bw()` theme.
+```{r}
+ggplot(Titanic) +
+  geom_bar(aes(x = Survived, y = Freq), stat = "identity") +
+  facet_grid(~Class + Sex + Age) +
+  theme_bw()
+```
+
+
+c. Make this graph using the `cowplot::theme_minimal_hgrid()` theme.
+```{r}
+ggplot(Titanic) +
+  geom_bar(aes(x = Survived, y = Freq), stat = "identity") +
+  facet_grid(~Class + Sex + Age) +
+  cowplot::theme_minimal_hgrid()
+```
+
+
+d. Why would it be beneficial to drop the vertical grid lines?
+    
+\color{blue}
+It might be beneficial to drop the vertical grid lines because we want to see how the bars compare to each other and the lines might distract looking at this comparison and they also don't really give us any useful information in the bar graph other than denoting the middle of each bar which we can already see without the vertical grid lines.
+
+\color{black}
+
+

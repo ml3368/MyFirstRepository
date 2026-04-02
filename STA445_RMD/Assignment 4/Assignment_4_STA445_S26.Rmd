@@ -1,0 +1,171 @@
+---
+geometry: left=0.8in,right=0.8in,top=0.8in,bottom=0.8in
+fontsize: 11pt
+title: "STA 445 S26 Assignment 4"
+author: "Max Levine"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+Load all the packages you will use in this chunk.  Notice, I have set include = FALSE because I don't want to see you loading packages in the output.
+
+```{r packages, include = FALSE}
+library(tidyverse)
+```
+
+
+## Problem 1
+
+For the following regular expression, explain in words what it matches on. Then add test strings to demonstrate that it in fact does match on the pattern you claim it does.  Do at least 4 tests.  Make sure that your test set of strings has several examples that match as well as several that do not. Make sure to remove the `eval=FALSE` so that the code and output shows in your pdf.
+
+a. This regular expression matches:  strings with the letter "a" in them to TRUE/FALSE values (it is case sensitive).
+
+```{r}
+        strings <- c("Apple", "consider", "attack", 15, "answer", "Advantage")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, 'a') )
+```
+b. This regular expression matches: strings with the letters "ab" in them in that order and is case sensitive to TRUE/FALSE values.
+
+```{r}
+        
+        strings <- c("absolute", "backpack", "drab", "superb apple")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, 'ab') )
+```
+
+c. This regular expression matches: strings that have either the letter "a" or the letter "b" (don't have to be next to each other like in part b) (or both) and it is still case sensitive and returns TRUE/FALSE values.
+
+```{r}
+        strings <- c("absolute", "ABSOLUTE", "backpack", "apple", 
+                     "consider")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '[ab]') )
+```
+
+d.  This regular expression matches: strings that have either the letter "a" or the letter "b" as the first character in the string (still case sensitive) and returns TRUE/FALSE values.
+
+```{r}
+        strings <- c("apple", "backpack", "consider", "bend", "drab", 
+                     "drab apple", "Apple")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '^[ab]') )
+```
+
+e. This regular expression matches: strings that have a number followed by a space followed by either the letter "a" or "A" in that order anywhere in the string and returns a TRUE/FALSE value.
+
+```{r}
+        strings <- c("apple", "1 apple", "1 Apple", "23 backpacks", 
+                     "fifty 2 apples")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '\\d+\\s[aA]') )
+```
+
+f. This regular expression matches: Very similar to the last part e, except it is now looking for spaces of zero or more, so strings with a digit followed by zero or more spaces followed by the letter "a" or "A" in that order anywhere in the string and returns a TRUE/FALSE value.
+
+```{r}
+        strings <- c("apple", "1 apple", "1 Apple", "23 backpacks", 
+                     "fifty 2apples", "25a")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '\\d+\\s*[aA]') )
+```
+
+g. This regular expression matches: strings with zero or more characters in them and returns a TRUE/FALSE value. (Not possible to get a FALSE here.)
+
+```{r}
+        strings <- c("test", "", NULL, "hello", "apple")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '.*') )
+```
+
+h. This regular expression matches: strings that start with exactly 2 characters followed directly by the string "bar" and returns a TRUE/FALSE value.
+
+```{r}
+        strings <- c("test", "12bar", "__bar", "___bar")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '^\\w{2}bar') )
+```
+
+i. This regular expression matches: strings that have either "foo.bar" exactly or strings that start with exactly 2 characters followed by bar.
+
+```{r}
+        strings <- c("foobar", "12 foo.bar", "mybar", "32bar foo.bar",
+                     "foo.bar 32bar", "barbar")
+        data.frame( string = strings ) %>%
+          mutate( result = str_detect(string, '(foo\\.bar)|(^\\w{2}bar)') )
+```
+    
+## Problem 2
+
+The following file names were used in a camera trap study. The S number represents the site, P is the plot within a site, C is the camera number within the plot, the first string of numbers is the YearMonthDay and the second string of numbers is the HourMinuteSecond.
+
+```{r}
+    file.names <- c( 'S123.P2.C10_20120621_213422.jpg',
+                     'S10.P1.C1_20120622_050148.jpg',
+                 'S187.P2.C2_20120702_023501.jpg')
+```
+    
+Produce a data frame with columns corresponding to the `site`, `plot`, `camera`, `year`, `month`, `day`, `hour`, `minute`, and `second` for these three file names. So we want to produce code that will create the data frame:
+
+```{r}
+df <- data.frame(Site = str_extract(file.names, pattern = "S\\d*"),
+                 Plot = str_extract(file.names, pattern = "P\\d*"),
+                 Camera = str_extract(file.names, pattern = "C\\d*"),
+                 Year = str_extract(file.names, pattern = "20\\d{2}"),
+                 Month = str_sub(str_extract(file.names, pattern = "\\d{8}"),
+                                 start = 5, end = 6),
+                 Day = str_sub(str_extract(file.names, pattern = "\\d{8}"),
+                               start = 7, end = 8),
+                 Hour = str_sub(str_extract(file.names, pattern = ".{10}$"),
+                                start = 1, end = 2),
+                 Minute = str_sub(str_extract(file.names, pattern = ".{10}$"),
+                                  start = 3, end = 4),
+                 Second = str_sub(str_extract(file.names, pattern = ".{10}$"),
+                                  start = 5, end = 6))
+df
+```
+
+    
+```{r, eval=FALSE}
+     Site Plot Camera Year Month Day Hour Minute Second
+     S123   P2    C10 2012    06  21   21     34     22
+      S10   P1     C1 2012    06  22   05     01     48
+      S187   P2     C2 2012    07  02   02     35     01
+```
+
+3. The full text from Lincoln's Gettysburg Address is given below. Calculate the mean word length *Note: consider 'battle-field' as one word with 11 letters*).
+
+```{r}
+Gettysburg <- 'Four score and seven years ago our fathers brought forth on this
+continent, a new nation, conceived in Liberty, and dedicated to the proposition
+that all men are created equal. Now we are engaged in a great civil war, testing
+whether that nation, or any nation so conceived and so dedicated, can long
+endure. We are met on a great battle-field of that war. We have come to dedicate
+a portion of that field, as a final resting place for those who here gave their
+lives that that nation might live. It is altogether fitting and proper that we
+should do this. But, in a larger sense, we can not dedicate -- we can not
+consecrate -- we can not hallow -- this ground. The brave men, living and dead,
+who struggled here, have consecrated it, far above our poor power to add or
+detract. The world will little note, nor long remember what we say here, but it
+can never forget what they did here. It is for us the living, rather, to be
+dedicated here to the unfinished work which they who fought here have thus far
+so nobly advanced. It is rather for us to be here dedicated to the great task
+remaining before us -- that from these honored dead we take increased devotion
+to that cause for which they gave the last full measure of devotion -- that we
+here highly resolve that these dead shall not have died in vain -- that this
+nation, under God, shall have a new birth of freedom -- and that government of
+the people, by the people, for the people, shall not perish from the earth.'
+```
+
+```{r}
+string <- str_replace_all(Gettysburg, pattern = "[,-\\.]", replacement = "")
+split <- data.frame(Words = str_split(string, pattern = "[\\s+]"))
+colnames(split) <- "Words"
+split <- split %>%
+  filter(Words != "")
+
+summarise(split,
+          Mean_Word_Length = sum(str_length(split$Words))/length(split$Words))
+```
+
+    
